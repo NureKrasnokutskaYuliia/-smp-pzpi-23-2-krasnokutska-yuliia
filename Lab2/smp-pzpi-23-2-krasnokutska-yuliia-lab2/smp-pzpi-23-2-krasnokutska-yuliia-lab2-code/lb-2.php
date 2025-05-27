@@ -105,4 +105,33 @@ function setup_profile(&$profile){
     }
 }
 
+function main() {
+    global $cart, $products, $profile;
+
+    while (true) {
+        show_menu();
+        $command = read_input();
+
+        switch ($command) {
+            case "1":
+                shopping($cart, $products);
+                break;
+            case "2":
+                show_bill($cart, $products);
+                break;
+            case "3":
+                setup_profile($profile);
+                break;
+            case "0":
+                echo "Дякуємо за покупки! До побачення.\n";
+                exit;
+            default:
+                echo "ПОМИЛКА! Введіть правильну команду\n";
+                break;
+        }
+        echo "\n";
+    }
+}
+
+main();
 ?>
