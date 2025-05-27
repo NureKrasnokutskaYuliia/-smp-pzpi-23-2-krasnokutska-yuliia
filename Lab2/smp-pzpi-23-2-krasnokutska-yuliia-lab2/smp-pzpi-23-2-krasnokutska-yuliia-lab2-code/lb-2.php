@@ -19,9 +19,7 @@ function print_menu(){
 
 function read_input($prompt = ''){
     return trim(readline($prompt));
-}
-
-$chose = read_input("Введіть команду: "); 
+} 
 
 function shopping(&$cart, $products){
     while (true){
@@ -109,7 +107,7 @@ function main() {
     global $cart, $products, $profile;
 
     while (true) {
-        show_menu();
+        print_menu();
         $command = read_input();
 
         switch ($command) {
@@ -131,7 +129,7 @@ function main() {
         }
         echo "\n";
     }
-}
+} 
 
-main();
+main()
 ?>
