@@ -93,4 +93,16 @@ function show_bill($cart, $products){
     echo "РАЗОМ ДО CПЛАТИ: $total_cost\n";
 }
 
+function setup_profile(&$profile){
+    while(true){
+        $name = read_input("Ваше ім'я: ");
+        if (!preg_match('/[a-zA-Zа-яА-ЯіІїЇєЄґҐ]/u', $name)) {
+            echo "Імʼя повинно містити хоча б одну літеру\n";
+            continue;
+        }
+        $profile['name'] = $name;
+        break;
+    }
+}
+
 ?>
