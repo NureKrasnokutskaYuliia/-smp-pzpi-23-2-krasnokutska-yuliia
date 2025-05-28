@@ -23,15 +23,29 @@ function read_input($prompt = ''){
 
 function shopping(&$cart, $products){
     while (true){
-        echo "№  НАЗВА                 ЦІНА\n";
+        $num_len = mb_strlen("№");
+        $name_len = mb_strlen("НАЗВА");
+        $price_len = mb_strlen("ЦІНА");
         foreach ($products as $id => $item){
-            printf("%-3d%-22s%3d\n", $id, $item['name'], $item['price']);
+            $num_len = max(mb_strlen("$id"), $num_len);
+            $name_len = max(mb_strlen($item['name']), $name_len);
+            $price_len = max(mb_strlen($item['price']), $price_len);
         }
+
+        echo mb_str_pad("№", $num_len, ' ', STR_PAD_RIGHT) . "  ";
+        echo mb_str_pad("НАЗВА", $name_len, ' ', STR_PAD_RIGHT) . "  ";
+        echo mb_str_pad("ЦІНА", $price_len, ' ', STR_PAD_RIGHT) . "\n";
+
+        foreach ($products as $id => $item){
+            echo mb_str_pad($id, $num_len, ' ', STR_PAD_RIGHT) . "  ";
+            echo mb_str_pad($item['name'], $name_len, ' ', STR_PAD_RIGHT) . "  ";
+            echo mb_str_pad($item['price'], $price_len, ' ', STR_PAD_RIGHT) . "\n";
+        }
+
         echo "   -----------\n";
         echo "0  ПОВЕРНУТИСЯ\n";
-        echo "Виберіть товар: ";
 
-        $input = read_input();
+        $input = read_input("Виберіть товар: ");
 
         if ($input === "0") return;
 
@@ -78,17 +92,47 @@ function show_bill($cart, $products){
         echo "КОШИК ПОРОЖНІЙ. ДОДАЙТЕ ТОВАРИ.\n";
         return;
     }
-    echo "№  НАЗВА                 ЦІНА  КІЛЬКІСТЬ  ВАРТІСТЬ\n";
-    $i = 1;
-    $total_cost = 0;
-    foreach ($cart as $id => $quantity) {
-        $name = $products[$id]['name'];
-        $price = $products[$id]['price'];
+
+    $num_len = mb_strlen("№");
+    $name_len = mb_strlen("НАЗВА");
+    $price_len = mb_strlen("ЦІНА");
+    $quantity_len = mb_strlen("КІЛЬКІСТЬ");
+    $cost_len = mb_strlen("ВАРТІСТЬ");
+
+    foreach ($cart as $id => $quantity){
+        $product = $products[$id];
+        $price = $product['price'];
         $cost = $price * $quantity;
-        printf("%-3d%-22s%5d%10d%10d\n", $i++, $name, $price, $quantity, $cost);
-        $total_cost += $cost;
+
+        $num_len = max(mb_strlen("$id"), $num_len);
+        $name_len = max(mb_strlen($product['name']), $name_len);
+        $price_len = max(mb_strlen("$price"), $price_len);
+        $quantity_len = max(mb_strlen("$quantity"), $quantity_len);
+        $cost_len = max(mb_strlen("$cost"), $cost_len);
     }
-    echo "РАЗОМ ДО CПЛАТИ: $total_cost\n";
+
+    echo mb_str_pad("№", $num_len, ' ', STR_PAD_RIGHT) . "  ";
+    echo mb_str_pad("НАЗВА", $name_len, ' ', STR_PAD_RIGHT) . "  ";
+    echo mb_str_pad("ЦІНА", $price_len, ' ', STR_PAD_RIGHT) . "  ";
+    echo mb_str_pad("КІЛЬКІСТЬ", $quantity_len, ' ', STR_PAD_RIGHT) . "  ";
+    echo mb_str_pad("ВАРТІСТЬ", $cost_len, ' ', STR_PAD_RIGHT) . "\n";
+
+    $total_cost = 0;
+    foreach ($cart as $id => $quantity){
+        $product = $products[$id];
+        $price = $product['price'];
+        $cost = $price * $quantity;
+        $total_cost += $cost;
+        
+        echo mb_str_pad($id, $num_len, ' ', STR_PAD_RIGHT) . "  ";
+        echo mb_str_pad($product['name'], $name_len, ' ', STR_PAD_RIGHT) . "  ";
+        echo mb_str_pad($price, $price_len, ' ', STR_PAD_RIGHT) . "  ";
+        echo mb_str_pad($quantity, $quantity_len, ' ', STR_PAD_RIGHT) . "  ";
+        echo mb_str_pad($cost, $cost_len, ' ', STR_PAD_RIGHT) . "\n";
+    }
+
+    echo str_repeat("-", $num_len + $name_len + $price_len + $quantity_len + $cost_len + 10) . "\n";
+    echo "РАЗОМ ДО СПЛАТИ: $total_cost грн\n";
 }
 
 function setup_profile(&$profile){
@@ -98,17 +142,30 @@ function setup_profile(&$profile){
             echo "Імʼя повинно містити хоча б одну літеру\n";
             continue;
         }
+
+        $age = read_input("Ваш вік: ");
+        if (!is_numeric($age) || (int)$age < 7 || (int)$age > 150) {
+            echo "Вік користувача повинен бути від 7 до 150 років.\n";
+            continue;
+        }
+
         $profile['name'] = $name;
+        $profile['age'] = (int)$age; 
         break;
     }
 }
 
 function main() {
-    global $cart, $products, $profile;
+    global $cart, $products, $user;
 
     while (true) {
         print_menu();
         $command = read_input();
+
+        if (!in_array($command, ["0", "1", "2", "3"])) {
+            echo "ПОМИЛКА! Введіть правильну команду\n\n";
+            continue;
+        }
 
         switch ($command) {
             case "1":
