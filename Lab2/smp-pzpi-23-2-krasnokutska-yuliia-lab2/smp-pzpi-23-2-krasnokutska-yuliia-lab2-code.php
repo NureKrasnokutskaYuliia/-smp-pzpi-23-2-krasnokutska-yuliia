@@ -1,4 +1,4 @@
-k#!usr/bin/php
+krs#!usr/bin/php
 <?php
 
 require_once 'products.php';
@@ -81,10 +81,20 @@ function shopping(&$cart, $products){
         if (empty($cart)){
             echo "КОШИК ПОРОЖНІЙ\n\n";
         } else {
-            echo "У КОШИКУ:\nНАЗВА        КІЛЬКІСТЬ\n";
+            echo "У КОШИКУ:\n";
+
+            $quantity_len = mb_strlen("КІЛЬКІСТЬ");
             foreach ($cart as $pid => $quantity) {
-                echo "{$products[$pid]['name']}  $quantity\n";
+                $name_len = max(mb_strlen($item['name']), $name_len);
+                $quantity_len = max($quantity_len, mb_strlen((string)$quantity));
             }
+            
+            paddings(["НАЗВА", "КІЛЬКІСТЬ"], [$name_len, $quantity_len]);
+            
+            foreach ($cart as $pid => $quantity) {
+                paddings([$products[$pid]['name'], $quantity], [$name_len, $quantity_len]);
+            }
+
             echo "\n";
         }
     }

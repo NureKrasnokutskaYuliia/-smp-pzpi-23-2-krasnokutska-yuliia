@@ -1,0 +1,151 @@
+#!/bin/bash
+
+case "$1" in
+  --help)
+    echo 'Конвертує файл schedule.csv з формату CIST у формат Google Calendar'
+    echo "Синтаксис: $0 [--help | --version] | [-q|--quiet] [[академ_група] файл_cist.csv]"
+    echo ""
+    echo -e "\t--help \t\t\tпоказати цю довідку та вийти"
+    echo -e "\t--version \t\tпоказати інформацію про версію та вийти"
+    echo -e "\t-q, --quiet \t\tне друкувати результат в stdout"
+    echo -e "\tакадем_група \t\tназва групи (додатково)"
+    echo -e "\tфайл_cist.csv \t\tфайл формату CSV, який потрібно обробити"
+    exit 0
+    ;;
+  --version)
+    echo 'CIST Schedule Converter 1.0.0'
+    exit 0
+    ;;
+  -q|--quiet)
+    quiet=true
+    shift
+    ;;
+esac
+
+if [ $# -eq 2 ]; then
+  group_s="$1"
+  shift
+  csv_s="$1"
+elif [ $# -eq 1 ]; then
+  csv_s="$1"
+fi
+
+csv_files=$(ls TimeTable_??_??_20??.csv 2>/dev/null | sort)
+
+if [ -z "$csv_s" ]; then 
+  select csv_s in $csv_files; do
+    break;
+  done
+fi
+
+if [ ! -f "$csv_s" ]; then 
+  echo "Файл '$csv_s' не існує." >&2
+  exit 1
+fi
+
+if [ ! -r "$csv_s" ]; then 
+  echo "Доступ до читання файлу '$csv_s' відхилено." >&2
+  exit 2 
+fi
+
+data_from_csv=$( cat "$csv_s" | sed 's/\r/\n/g' | iconv -f cp1251 -t utf-8 )
+
+groups=$(
+    echo "$data_from_csv" \
+    | awk -vFPAT='[^,]*|"[^"]*"' '
+      NR > 1 {
+          gsub(/^"/, "", $1);
+          if (split($1, result, " - ") == 1){
+            print "1"
+          } else {
+            print result[1]
+          }
+      }
+    ' \
+    | sort \
+    | uniq
+)
+
+if [ -z "$group_s" ]; then
+  if [ $(echo "$groups" | wc --lines) -eq 1 ]; then 
+    group_s="$groups"
+  else	
+    select group_s in $groups; do
+      break;
+    done
+  fi
+fi
+
+if ! echo "$groups" | grep -q "$group_s" ; then
+  echo "Не існує групи '$group_s' в наданому файлі. Будь-ласка, оберіть іншу групу."
+  if [ $(echo "$groups" | wc --lines) -eq 1 ]; then 
+    group_s="$groups"
+  else	
+    select group_s in $groups; do
+      break;
+    done
+  fi
+fi
+
+if [ "$group_s" = "1" ]; then
+    group_patt='^\"'
+else
+    group_patt="^\"$group_s - "
+fi
+
+processing() {
+    echo "$data_from_csv" \
+    | awk -vFPAT='[^,]*|"[^"]*"' -v group_patt="$group_patt" '        
+    function format_date(date) {
+        gsub(/"/, "", date)
+        split(date, d, ".")
+        return d[2] "/" d[1] "/" d[3]
+    }
+
+    function format_time(time,    ampm) {
+        gsub(/"/, "", time)
+        split(time, t, ":") 
+
+        if (t[1] == "00" && t[2] == "00" && t[3] == "00") {
+          ampm="AM"
+        } else if (t[1] == "12" && t[2] == "00" && t[3] == "00") {
+          ampm="PM"
+        } else if (t[1] >= 12) {
+          ampm="PM"
+        } else {
+          ampm="AM"
+        }
+
+        return t[1] ":" t[2] " " ampm
+    }
+
+    NR==1 { 
+      print "Subject,Start Date,Start Time,End Date,End Time,Description" 
+    }
+
+    NR!=1 && $1 ~ group_patt {
+      gsub(/"/, "", $1)
+      if(split($1, subject, " - ") == 1) { 
+          $1 = subject[1]
+      }
+      else { 
+          $1 = subject[2]
+      }
+
+      $2 = format_date($2)
+      $3 = format_time($3)
+      $4 = format_date($4)
+      $5 = format_time($5)
+      
+      date_lessons[$2]++
+
+      print "\"" $1 "; №" date_lessons[$2] "\"," $2 "," $3 "," $4 "," $5 "," $12
+    }
+    '
+}
+
+if [ -z "$quiet" ]; then
+        processing | tee "Google_$csv_s"
+else
+        processing > "Google_$csv_s"
+fi
