@@ -1,4 +1,4 @@
-#!usr/bin/php
+k#!usr/bin/php
 <?php
 
 require_once 'products.php';
@@ -21,6 +21,13 @@ function read_input($prompt = ''){
     return trim(readline($prompt));
 } 
 
+function paddings($row, $widths) {
+    foreach ($row as $i => $cell) {
+        echo mb_str_pad($cell, $widths[$i], ' ', STR_PAD_RIGHT) . "  ";
+    }
+    echo "\n";
+}
+
 function shopping(&$cart, $products){
     while (true){
         $num_len = mb_strlen("№");
@@ -32,14 +39,10 @@ function shopping(&$cart, $products){
             $price_len = max(mb_strlen($item['price']), $price_len);
         }
 
-        echo mb_str_pad("№", $num_len, ' ', STR_PAD_RIGHT) . "  ";
-        echo mb_str_pad("НАЗВА", $name_len, ' ', STR_PAD_RIGHT) . "  ";
-        echo mb_str_pad("ЦІНА", $price_len, ' ', STR_PAD_RIGHT) . "\n";
+        paddings(["№", "НАЗВА", "ЦІНА"], [$num_len, $name_len, $price_len]);
 
         foreach ($products as $id => $item){
-            echo mb_str_pad($id, $num_len, ' ', STR_PAD_RIGHT) . "  ";
-            echo mb_str_pad($item['name'], $name_len, ' ', STR_PAD_RIGHT) . "  ";
-            echo mb_str_pad($item['price'], $price_len, ' ', STR_PAD_RIGHT) . "\n";
+            paddings([$id, $item['name'], $item['price']], [$num_len, $name_len, $price_len]);
         }
 
         echo "   -----------\n";
@@ -111,11 +114,7 @@ function show_bill($cart, $products){
         $cost_len = max(mb_strlen("$cost"), $cost_len);
     }
 
-    echo mb_str_pad("№", $num_len, ' ', STR_PAD_RIGHT) . "  ";
-    echo mb_str_pad("НАЗВА", $name_len, ' ', STR_PAD_RIGHT) . "  ";
-    echo mb_str_pad("ЦІНА", $price_len, ' ', STR_PAD_RIGHT) . "  ";
-    echo mb_str_pad("КІЛЬКІСТЬ", $quantity_len, ' ', STR_PAD_RIGHT) . "  ";
-    echo mb_str_pad("ВАРТІСТЬ", $cost_len, ' ', STR_PAD_RIGHT) . "\n";
+    paddings(["№", "НАЗВА", "ЦІНА", "КІЛЬКІСТЬ", "ВАРТІСТЬ"], [$num_len, $name_len, $price_len, $quantity_len, $cost_len]);
 
     $total_cost = 0;
     foreach ($cart as $id => $quantity){
@@ -124,11 +123,7 @@ function show_bill($cart, $products){
         $cost = $price * $quantity;
         $total_cost += $cost;
         
-        echo mb_str_pad($id, $num_len, ' ', STR_PAD_RIGHT) . "  ";
-        echo mb_str_pad($product['name'], $name_len, ' ', STR_PAD_RIGHT) . "  ";
-        echo mb_str_pad($price, $price_len, ' ', STR_PAD_RIGHT) . "  ";
-        echo mb_str_pad($quantity, $quantity_len, ' ', STR_PAD_RIGHT) . "  ";
-        echo mb_str_pad($cost, $cost_len, ' ', STR_PAD_RIGHT) . "\n";
+        paddings([$id, $product['name'], $price, $quantity, $cost], [$num_len, $name_len, $price_len, $quantity_len, $cost_len]);
     }
 
     echo str_repeat("-", $num_len + $name_len + $price_len + $quantity_len + $cost_len + 10) . "\n";
