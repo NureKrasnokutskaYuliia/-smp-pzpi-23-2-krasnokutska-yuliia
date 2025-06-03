@@ -1,4 +1,4 @@
-krs#!usr/bin/php
+#!/usr/bin/php
 <?php
 
 require_once 'products.php';
